@@ -18,9 +18,6 @@ build/
 .idea/copyright/
 .idea/jsLibraryMappings.xml
 
-# Ignore Gradle wrapper jar files
-gradle/wrapper/gradle-wrapper.properties
-
 # Ignore any generated files
 local.properties
 *.iml

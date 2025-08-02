@@ -1,16 +1,18 @@
 package com.example.minhaprimeiraapi
 
 import android.os.Bundle
-import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.minhaprimeiraapi.adapter.ItemAdapter
 import com.example.minhaprimeiraapi.databinding.ActivityMainBinding
+import com.example.minhaprimeiraapi.service.Result
 import com.example.minhaprimeiraapi.service.RetrofitClient
+import com.example.minhaprimeiraapi.service.safeApiCall
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import safeApiCall
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,13 +32,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupView() {
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            binding.swipeRefreshLayout.isRefreshing = true
+            fetchItems()
+        }
     }
 
     private fun fetchItems() {
         CoroutineScope(Dispatchers.IO).launch {
             val result = safeApiCall { RetrofitClient.apiService.getItems() }
 
-            Log.d("HelloWorld", "Hello $result")
+            withContext(Dispatchers.Main) {
+                binding.swipeRefreshLayout.isRefreshing = false
+                when (result) {
+                    is Result.Success -> {
+                        val adapter = ItemAdapter(result.data)
+                        binding.recyclerView.adapter = adapter
+                    }
+                    is Result.Error -> {
+                        Toast.makeText(this@MainActivity, "Erro", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
     }
 }

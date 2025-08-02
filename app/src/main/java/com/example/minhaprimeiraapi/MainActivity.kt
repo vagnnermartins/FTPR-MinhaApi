@@ -1,6 +1,7 @@
 package com.example.minhaprimeiraapi
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -46,7 +47,13 @@ class MainActivity : AppCompatActivity() {
                 binding.swipeRefreshLayout.isRefreshing = false
                 when (result) {
                     is Result.Success -> {
-                        val adapter = ItemAdapter(result.data)
+                        val adapter = ItemAdapter(result.data) { item ->
+                            Log.d("Hello World", "Clicou no item ${item.value.name}")
+                            startActivity(ItemDetailActivity.newIntent(
+                                context = this@MainActivity,
+                                itemId = item.id
+                            ))
+                        }
                         binding.recyclerView.adapter = adapter
                     }
                     is Result.Error -> {

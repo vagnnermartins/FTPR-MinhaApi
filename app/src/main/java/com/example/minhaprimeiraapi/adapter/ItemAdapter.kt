@@ -11,7 +11,8 @@ import com.example.minhaprimeiraapi.model.Item
 import com.example.minhaprimeiraapi.ui.loadUrl
 
 class ItemAdapter(
-    private val items: List<Item>
+    private val items: List<Item>,
+    private val itemClickListener: (Item) -> Unit
 ) : RecyclerView.Adapter<ItemAdapter.ItemViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemAdapter.ItemViewHolder {
@@ -26,6 +27,9 @@ class ItemAdapter(
         holder.age.text = holder.itemView.context.getString(R.string.item_age, item.value.age.toString())
         holder.address.text = item.value.location.name
         holder.imageView.loadUrl(item.value.imageUrl)
+        holder.itemView.setOnClickListener {
+            itemClickListener(item)
+        }
     }
 
     override fun getItemCount(): Int = items.size

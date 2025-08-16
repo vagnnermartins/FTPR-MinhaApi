@@ -119,6 +119,13 @@ class MainActivity : AppCompatActivity() {
             binding.swipeRefreshLayout.isRefreshing = true
             fetchItems()
         }
+        binding.addCta.setOnClickListener {
+            navigateToNewItem()
+        }
+    }
+
+    private fun navigateToNewItem() {
+        startActivity(NewItemActivity.newIntent(this))
     }
 
     private fun fetchItems() {

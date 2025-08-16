@@ -15,6 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.DayNight"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyA6DkvzZRhkaiPVi8kB_l6kHtQvE4rVe5U"/>
         <activity
             android:name=".ItemDetailActivity"
             android:exported="false"

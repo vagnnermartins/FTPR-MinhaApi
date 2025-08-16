@@ -3,4 +3,6 @@
     <string name="item_age">%1$s anos</string>
     <string name="error_delete">Erro ao deletar o item</string>
     <string name="success_delete">Item deletado com sucesso</string>
+    <string name="error_request_location_permission">Permissão de localização negada!</string>
+    <string name="unknown_error">Erro Desconhecido</string>
 </resources>

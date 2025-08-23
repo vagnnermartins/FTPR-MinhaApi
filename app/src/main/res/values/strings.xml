@@ -5,4 +5,8 @@
     <string name="success_delete">Item deletado com sucesso</string>
     <string name="error_request_location_permission">Permissão de localização negada!</string>
     <string name="unknown_error">Erro Desconhecido</string>
+    <string name="error_validate_form">Por favor, preencha o campo: %1$s</string>
+    <string name="error_validate_form_location">Por favor, selecione a localização no mapa.</string>
+    <string name="error_create">Erro ao criar o Item</string>
+    <string name="success_create">Item %1$s adicionado com sucesso!</string>
 </resources>

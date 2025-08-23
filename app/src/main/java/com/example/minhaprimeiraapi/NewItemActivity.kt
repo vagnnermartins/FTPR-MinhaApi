@@ -6,10 +6,16 @@ import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.example.minhaprimeiraapi.databinding.ActivityNewItemBinding
+import com.example.minhaprimeiraapi.model.ItemLocation
+import com.example.minhaprimeiraapi.model.ItemValue
+import com.example.minhaprimeiraapi.service.Result
+import com.example.minhaprimeiraapi.service.RetrofitClient
+import com.example.minhaprimeiraapi.service.safeApiCall
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -19,6 +25,11 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.security.SecureRandom
 
 class NewItemActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -45,6 +56,110 @@ class NewItemActivity : AppCompatActivity(), OnMapReadyCallback {
         binding.toolbar.setNavigationOnClickListener {
             finish()
         }
+        binding.saveCta.setOnClickListener {
+            onSave()
+        }
+    }
+
+    private fun onSave() {
+        if (!validateForm()) return
+
+        val name = binding.name.text.toString()
+        val surname = binding.surname.text.toString()
+        val age = binding.age.text.toString().toInt()
+        val profession = binding.profession.text.toString()
+        val imageUrl = binding.imageUrl.text.toString()
+        val location = selectedMarker?.position?.let { position ->
+            ItemLocation(
+                position.latitude,
+                position.longitude,
+                name
+            )
+        } ?: throw IllegalArgumentException("Usuário deveria ter a localização nesse ponto.")
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val itemValue = ItemValue(
+                SecureRandom().nextInt().toString(),
+                name,
+                surname,
+                profession,
+                imageUrl,
+                age,
+                location
+            )
+            val result = safeApiCall { RetrofitClient.apiService.addItem(itemValue) }
+            withContext(Dispatchers.Main) {
+                when (result) {
+                    is Result.Error -> {
+                        Toast.makeText(
+                            this@NewItemActivity,
+                            R.string.error_create,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    is Result.Success -> {
+                        Toast.makeText(
+                            this@NewItemActivity,
+                            getString(R.string.success_create, name),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        finish()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun validateForm(): Boolean {
+        if (binding.name.text.toString().isBlank()) {
+            Toast.makeText(
+                this,
+                getString(R.string.error_validate_form, "Name"),
+                Toast.LENGTH_SHORT
+            ).show()
+            return false
+        }
+        if (binding.surname.text.toString().isBlank()) {
+            Toast.makeText(
+                this,
+                getString(R.string.error_validate_form, "Surname"),
+                Toast.LENGTH_SHORT
+            ).show()
+            return false
+        }
+        if (binding.age.text.toString().isBlank()) {
+            Toast.makeText(
+                this,
+                getString(R.string.error_validate_form, "Age"),
+                Toast.LENGTH_SHORT
+            ).show()
+            return false
+        }
+        if (binding.profession.text.toString().isBlank()) {
+            Toast.makeText(
+                this,
+                getString(R.string.error_validate_form, "Profession"),
+                Toast.LENGTH_SHORT
+            ).show()
+            return false
+        }
+        if (binding.imageUrl.text.toString().isBlank()) {
+            Toast.makeText(
+                this,
+                getString(R.string.error_validate_form, "Imagem"),
+                Toast.LENGTH_SHORT
+            ).show()
+            return false
+        }
+        if (selectedMarker == null) {
+            Toast.makeText(
+                this,
+                getString(R.string.error_validate_form_location),
+                Toast.LENGTH_SHORT
+            ).show()
+            return false
+        }
+        return true
     }
 
     private fun setupGoogleMap() {

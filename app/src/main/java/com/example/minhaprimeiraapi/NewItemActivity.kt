@@ -5,6 +5,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -18,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.core.content.FileProvider
+import androidx.core.view.isVisible
 import com.example.minhaprimeiraapi.databinding.ActivityNewItemBinding
 import com.example.minhaprimeiraapi.model.ItemLocation
 import com.example.minhaprimeiraapi.model.ItemValue
@@ -33,14 +36,17 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.security.SecureRandom
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.UUID
 
 class NewItemActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -56,9 +62,7 @@ class NewItemActivity : AppCompatActivity(), OnMapReadyCallback {
         ActivityResultContracts.StartActivityForResult()
     ) {
         if (it.resultCode == Activity.RESULT_OK) {
-            imageFile?.let {
-                binding.imageUrl.setText(it.path)
-            }
+            uploadImageToFirebase()
         }
     }
 
@@ -70,6 +74,40 @@ class NewItemActivity : AppCompatActivity(), OnMapReadyCallback {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         setupView()
         setupGoogleMap()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            REQUEST_CODE_CAMERA -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PERMISSION_GRANTED) {
+                    openCamera()
+                } else {
+                    Toast.makeText(this, R.string.error_request_camera, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+        binding.mapContent.visibility = View.VISIBLE
+        mMap.setOnMapClickListener { latLng ->
+            selectedMarker?.remove() // Limpa o Marker atual, caso exista
+
+            // Armazena o local do Novo Marker criado
+            selectedMarker = mMap.addMarker(
+                MarkerOptions()
+                    .position(latLng)
+                    .draggable(true)
+                    .title("Lat: ${latLng.latitude} Long: ${latLng.longitude}")
+            )
+        }
+        getDeviceLocation()
     }
 
     private fun setupView() {
@@ -103,27 +141,6 @@ class NewItemActivity : AppCompatActivity(), OnMapReadyCallback {
         )
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            REQUEST_CODE_CAMERA -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PERMISSION_GRANTED) {
-                    openCamera()
-                } else {
-                    Toast.makeText(
-                        this,
-                        R.string.error_request_camera,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
-    }
-
     private fun openCamera() {
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         imageUri = createImageUri()
@@ -154,7 +171,10 @@ class NewItemActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun onSave() {
         if (!validateForm()) return
+        saveData()
+    }
 
+    private fun saveData() {
         val name = binding.name.text.toString()
         val surname = binding.surname.text.toString()
         val age = binding.age.text.toString().toInt()
@@ -188,6 +208,7 @@ class NewItemActivity : AppCompatActivity(), OnMapReadyCallback {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                     is Result.Success -> {
                         Toast.makeText(
                             this@NewItemActivity,
@@ -258,23 +279,6 @@ class NewItemActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
     }
 
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-        binding.mapContent.visibility = View.VISIBLE
-        mMap.setOnMapClickListener { latLng ->
-            selectedMarker?.remove() // Limpa o Marker atual, caso exista
-
-            // Armazena o local do Novo Marker criado
-            selectedMarker = mMap.addMarker(
-                MarkerOptions()
-                    .position(latLng)
-                    .draggable(true)
-                    .title("Lat: ${latLng.latitude} Long: ${latLng.longitude}")
-            )
-        }
-        getDeviceLocation()
-    }
-
     private fun getDeviceLocation() {
         if (
             checkSelfPermission(
@@ -296,6 +300,39 @@ class NewItemActivity : AppCompatActivity(), OnMapReadyCallback {
             val currentLocationLatLng = LatLng(location.latitude, location.longitude)
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocationLatLng, 15f))
         }
+    }
+
+    private fun uploadImageToFirebase() {
+        // Obtém referência do Firebase Storage
+        val storageRef = FirebaseStorage.getInstance().reference
+
+        // Cria uma referência para a nossa imagem
+        val imagesRef = storageRef.child("images/${UUID.randomUUID()}.jpg")
+
+        val baos = ByteArrayOutputStream()
+        val imageBitmap = BitmapFactory.decodeFile(imageFile!!.path)
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+        val data = baos.toByteArray()
+
+        onLoadingImage(true) // Coloca um load na tela
+        imagesRef.putBytes(data)
+            .addOnCompleteListener {
+                onLoadingImage(false)
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, R.string.error_upload_image, Toast.LENGTH_SHORT).show()
+            }
+            .addOnSuccessListener {
+                imagesRef.downloadUrl.addOnSuccessListener { uri ->
+                    binding.imageUrl.setText(uri.toString())
+                }
+            }
+    }
+
+    private fun onLoadingImage(isLoading: Boolean) {
+        binding.loadImageProgress.isVisible = isLoading
+        binding.takePictureCta.isEnabled = !isLoading
+        binding.saveCta.isEnabled = !isLoading
     }
 
     companion object {

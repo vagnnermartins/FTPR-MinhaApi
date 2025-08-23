@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "217633404435",
+    "project_id": "minhaprimeiraapi-2baec",
+    "storage_bucket": "minhaprimeiraapi-2baec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217633404435:android:90070d6c7d93e61b3571e6",
+        "android_client_info": {
+          "package_name": "com.example.minhaprimeiraapi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCcIauaHogy8hisRnGUjXT_uWFqMcyUuo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

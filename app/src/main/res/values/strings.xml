@@ -10,4 +10,5 @@
     <string name="error_create">Erro ao criar o Item</string>
     <string name="success_create">Item %1$s adicionado com sucesso!</string>
     <string name="error_request_camera">Permissão de câmera não concedida</string>
+    <string name="error_upload_image">Erro ao realizar o upload da imagem</string>
 </resources>

@@ -11,4 +11,7 @@
     <string name="success_create">Item %1$s adicionado com sucesso!</string>
     <string name="error_request_camera">Permissão de câmera não concedida</string>
     <string name="error_upload_image">Erro ao realizar o upload da imagem</string>
+    <string name="error_login">Erro ao fazer Login</string>
+    <string name="success_login_sent">Código enviado por SMS\n</string>
+    <string name="error_login_verification">Erro ao verificar o código SMS</string>
 </resources>

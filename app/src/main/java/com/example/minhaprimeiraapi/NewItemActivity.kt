@@ -316,14 +316,15 @@ class NewItemActivity : AppCompatActivity(), OnMapReadyCallback {
 
         onLoadingImage(true) // Coloca um load na tela
         imagesRef.putBytes(data)
-            .addOnCompleteListener {
-                onLoadingImage(false)
-            }
             .addOnFailureListener {
                 Toast.makeText(this, R.string.error_upload_image, Toast.LENGTH_SHORT).show()
             }
             .addOnSuccessListener {
-                imagesRef.downloadUrl.addOnSuccessListener { uri ->
+                imagesRef.downloadUrl
+                    .addOnCompleteListener {
+                        onLoadingImage(false)
+                    }
+                    .addOnSuccessListener { uri ->
                     binding.imageUrl.setText(uri.toString())
                 }
             }

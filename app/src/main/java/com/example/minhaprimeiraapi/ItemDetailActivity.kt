@@ -61,6 +61,9 @@ class ItemDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         binding.deleteCTA.setOnClickListener {
             deleteItem()
         }
+        binding.editCTA.setOnClickListener {
+            editItem()
+        }
     }
 
     private fun loadItemLocationInGoogleMap() {
@@ -122,6 +125,36 @@ class ItemDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                         Toast.makeText(
                             this@ItemDetailActivity,
                             R.string.success_delete,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        finish()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun editItem() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val result = safeApiCall {
+                RetrofitClient.apiService.updateItem(
+                    item.id,
+                    item.value.copy(profession = binding.profession.text.toString())
+                )
+            }
+            withContext(Dispatchers.Main) {
+                when (result) {
+                    is Result.Error -> {
+                        Toast.makeText(
+                            this@ItemDetailActivity,
+                            R.string.error_update,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    is Result.Success -> {
+                        Toast.makeText(
+                            this@ItemDetailActivity,
+                            R.string.success_update,
                             Toast.LENGTH_SHORT
                         ).show()
                         finish()

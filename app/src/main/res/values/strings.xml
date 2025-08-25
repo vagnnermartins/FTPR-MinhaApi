@@ -14,4 +14,6 @@
     <string name="error_login">Erro ao fazer Login</string>
     <string name="success_login_sent">Código enviado por SMS\n</string>
     <string name="error_login_verification">Erro ao verificar o código SMS</string>
+    <string name="error_update">Erro ao atualizar o item</string>
+    <string name="success_update">Item atualizado com sucesso!</string>
 </resources>
